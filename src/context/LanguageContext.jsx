@@ -20,6 +20,9 @@ export const TRANSLATIONS = {
       xMax: 'Max Value (X)',
       yMax: 'Max Energy (Y)',
       zMax: 'Max Access (Z)',
+      addRule: 'Add Rule',
+      selectRule: 'Select Rule Type',
+      add: 'Add',
     },
     layout: {
       visualization: '3D View',
@@ -73,6 +76,9 @@ export const TRANSLATIONS = {
       xMax: '最大价值 (X)',
       yMax: '最大能量 (Y)',
       zMax: '最大可达性 (Z)',
+      addRule: '添加规则',
+      selectRule: '选择规则类型',
+      add: '添加',
     },
     layout: {
       visualization: '3D 视图',

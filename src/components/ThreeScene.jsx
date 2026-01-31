@@ -6,14 +6,28 @@ import { CATEGORIES } from '../utils/logic';
 import * as THREE from 'three';
 
 function Axis({ start, end, label, color = "white" }) {
+    // start and end are in world coordinates (-5 to 5)
+    // We want to label them 0 to 10
+    // World -5 -> Data 0
+    // World 0 -> Data 5
+    // World 5 -> Data 10
+    
     return (
         <group>
             <Line points={[start, end]} color={color} lineWidth={1} />
             <Text position={end} fontSize={0.5} color={color} anchorX="center" anchorY="middle">
                 {label}
             </Text>
-            {[2, 4, 6, 8, 10].map(v => {
-                const pos = new THREE.Vector3().lerpVectors(new THREE.Vector3(...start), new THREE.Vector3(...end), v / 10);
+            {[0, 2, 4, 6, 8, 10].map(v => {
+                // Map data value v (0-10) to world lerp factor
+                // Data 0 is at start (t=0), Data 10 is at end (t=1)? 
+                // Wait, start is -5, end is 5.
+                // If we pass start=[-5,..] and end=[5,..], then t=0 is -5(Data 0), t=1 is 5(Data 10).
+                const t = v / 10;
+                const pos = new THREE.Vector3().lerpVectors(new THREE.Vector3(...start), new THREE.Vector3(...end), t);
+                
+                // Skip label at origin (5) to avoid clutter if needed, or keep it.
+                // Center is 5.
                 return (
                     <Text key={v} position={pos} fontSize={0.2} color="gray">
                         {v}
@@ -27,14 +41,19 @@ function Axis({ start, end, label, color = "white" }) {
 function GridBox() {
     return (
         <group>
-            <Axis start={[0, 0, 0]} end={[11, 0, 0]} label="Value (X)" color="#ef4444" />
-            <Axis start={[0, 0, 0]} end={[0, 11, 0]} label="Energy (Y)" color="#eab308" />
-            <Axis start={[0, 0, 0]} end={[0, 0, 11]} label="Access (Z)" color="#3b82f6" />
+            {/* Axes spanning from -5 to 5 (Data 0 to 10) */}
+            <Axis start={[-5, 0, 0]} end={[5, 0, 0]} label="Value (X)" color="#ef4444" />
+            <Axis start={[0, -5, 0]} end={[0, 5, 0]} label="Energy (Y)" color="#eab308" />
+            <Axis start={[0, 0, -5]} end={[0, 0, 5]} label="Access (Z)" color="#3b82f6" />
 
-            <lineSegments position={[5, 5, 5]}>
+            {/* Bounding Box centered at 0,0,0 */}
+            <lineSegments position={[0, 0, 0]}>
                 <edgesGeometry args={[new THREE.BoxGeometry(10, 10, 10)]} />
                 <lineBasicMaterial color="#333" transparent opacity={0.3} />
             </lineSegments>
+            
+            {/* Optional: Add a subtle grid plane at the center for reference */}
+             <gridHelper args={[10, 10, 0x444444, 0x222222]} position={[0, -5, 0]} />
         </group>
     );
 }
@@ -42,7 +61,9 @@ function GridBox() {
 function DataPoint({ contact, onClick }) {
     const [hovered, setHovered] = useState(false);
     const color = CATEGORIES[contact.category]?.color || 'white';
-    const position = [Number(contact.x), Number(contact.y), Number(contact.z)];
+    
+    // Shift position: Data(0..10) -> World(-5..5)
+    const position = [Number(contact.x) - 5, Number(contact.y) - 5, Number(contact.z) - 5];
 
     useFrame(() => {
         if (hovered) {
@@ -69,6 +90,13 @@ function DataPoint({ contact, onClick }) {
 
             {hovered && (
                 <group>
+                    {/* Lines drop to the central planes (X=0, Y=0, Z=0 which is Data=5) */}
+                    {/* The point is at 'position' relative to world 0,0,0 */}
+                    {/* Inside this group, local 0,0,0 is the point. */}
+                    {/* We want to draw line to [0, y, z] (projected to YZ plane, i.e. X=0) */}
+                    {/* Vector from Point(x,y,z) to Proj(0,y,z) is (-x, 0, 0). */}
+                    {/* So points=[[0,0,0], [-position[0], 0, 0]] works perfectly to project to center planes. */}
+                    
                     <Line points={[[0, 0, 0], [-position[0], 0, 0]]} color="gray" dashed opacity={0.5} />
                     <Line points={[[0, 0, 0], [0, -position[1], 0]]} color="gray" dashed opacity={0.5} />
                     <Line points={[[0, 0, 0], [0, 0, -position[2]]]} color="gray" dashed opacity={0.5} />
