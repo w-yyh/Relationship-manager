@@ -1,10 +1,12 @@
 import React from 'react';
-import { Box, Settings as SettingsIcon, Users, BarChart3 } from 'lucide-react';
+import { Box, Settings as SettingsIcon, Users, BarChart3, LogOut } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 export function Layout({ children, activeTab, onTabChange }) {
     const { t } = useLanguage();
+    const { logout } = useAuth();
     
     const tabs = [
         { id: 'visualization', label: t('layout.visualization'), icon: Box },
@@ -43,7 +45,7 @@ export function Layout({ children, activeTab, onTabChange }) {
                     })}
                 </nav>
 
-                <div className="mt-auto pt-4 border-t border-zinc-800 w-full">
+                <div className="mt-auto pt-4 border-t border-zinc-800 w-full space-y-2">
                     <button
                         onClick={() => onTabChange('settings')}
                         className={cn(
@@ -53,6 +55,13 @@ export function Layout({ children, activeTab, onTabChange }) {
                     >
                         <SettingsIcon size={20} />
                         <span className="hidden md:block text-sm">{t('layout.settings')}</span>
+                    </button>
+                    <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:bg-red-500/10 hover:text-red-500 rounded transition-colors"
+                    >
+                        <LogOut size={20} />
+                        <span className="hidden md:block text-sm">Logout</span>
                     </button>
                 </div>
             </div>

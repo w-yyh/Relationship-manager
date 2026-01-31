@@ -42,6 +42,22 @@ export const CATEGORIES = {
   }
 };
 
+export const PRIORITY_ORDER = [
+  'CORE_POWER',
+  'STRATEGIC_GOAL',
+  'EXECUTION_FORCE',
+  'PRESTIGE_LEVERAGE'
+];
+
+export const RULE_TYPES = [
+  { key: 'xMin', label: 'Min Value (X)', axis: 'x', type: 'min' },
+  { key: 'xMax', label: 'Max Value (X)', axis: 'x', type: 'max' },
+  { key: 'yMin', label: 'Min Energy (Y)', axis: 'y', type: 'min' },
+  { key: 'yMax', label: 'Max Energy (Y)', axis: 'y', type: 'max' },
+  { key: 'zMin', label: 'Min Access (Z)', axis: 'z', type: 'min' },
+  { key: 'zMax', label: 'Max Access (Z)', axis: 'z', type: 'max' },
+];
+
 /**
  * Classify a contact based on x, y, z scores and dynamic thresholds
  * @param {number} x
@@ -51,37 +67,26 @@ export const CATEGORIES = {
  * @returns {string} Category ID
  */
 export function classifyContact(x, y, z, thresholds) {
-  // Use default fallback if thresholds not provided (though context should provide them)
-  const t = thresholds || {
-    CORE_POWER: { xMin: 7, yMin: 7, zMin: 7 },
-    STRATEGIC_GOAL: { xMin: 7, yMin: 7, zMax: 4 },
-    EXECUTION_FORCE: { xMin: 7, zMin: 7, yMax: 5 },
-    PRESTIGE_LEVERAGE: { yMin: 7, xMax: 5 },
-  };
+  if (!thresholds) return CATEGORIES.OTHERS.id;
 
-  // Helper to check standard Min threshold
-  const checkMin = (val, min) => min === undefined || val >= min;
-  // Helper to check standard Max threshold
-  const checkMax = (val, max) => max === undefined || val <= max;
+  for (const catId of PRIORITY_ORDER) {
+    const rules = thresholds[catId];
+    if (!rules) continue;
 
-  // 1. Core Power (High X, High Y, High Z)
-  if (checkMin(x, t.CORE_POWER.xMin) && checkMin(y, t.CORE_POWER.yMin) && checkMin(z, t.CORE_POWER.zMin)) {
-    return CATEGORIES.CORE_POWER.id;
-  }
+    const pass = Object.entries(rules).every(([key, val]) => {
+      const value = Number(val);
+      switch (key) {
+        case 'xMin': return x >= value;
+        case 'xMax': return x <= value;
+        case 'yMin': return y >= value;
+        case 'yMax': return y <= value;
+        case 'zMin': return z >= value;
+        case 'zMax': return z <= value;
+        default: return true; // Ignore unknown keys
+      }
+    });
 
-  // 2. Strategic Goal (High X, High Y, Low Z)
-  if (checkMin(x, t.STRATEGIC_GOAL.xMin) && checkMin(y, t.STRATEGIC_GOAL.yMin) && checkMax(z, t.STRATEGIC_GOAL.zMax)) {
-    return CATEGORIES.STRATEGIC_GOAL.id;
-  }
-
-  // 3. Execution Force (High X, High Z, Low Y)
-  if (checkMin(x, t.EXECUTION_FORCE.xMin) && checkMin(z, t.EXECUTION_FORCE.zMin) && checkMax(y, t.EXECUTION_FORCE.yMax)) {
-    return CATEGORIES.EXECUTION_FORCE.id;
-  }
-
-  // 4. Prestige Leverage (High Y, Low X)
-  if (checkMin(y, t.PRESTIGE_LEVERAGE.yMin) && checkMax(x, t.PRESTIGE_LEVERAGE.xMax)) {
-    return CATEGORIES.PRESTIGE_LEVERAGE.id;
+    if (pass) return catId;
   }
 
   return CATEGORIES.OTHERS.id;
