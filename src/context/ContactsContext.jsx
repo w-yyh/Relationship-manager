@@ -23,6 +23,7 @@ export function ContactsProvider({ children }) {
                 // Ensure loaded contacts are classified correctly with current thresholds
                 const classified = data.map(c => ({
                     ...c,
+                    tags: c.tags ? JSON.parse(c.tags) : [],
                     category: classifyContact(Number(c.x), Number(c.y), Number(c.z), thresholds)
                 }));
                 setContacts(classified);

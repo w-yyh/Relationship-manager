@@ -32,8 +32,19 @@ function initDb() {
             z REAL,
             note TEXT,
             category TEXT,
+            value_provide TEXT,
+            value_receive TEXT,
+            tags TEXT,
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        )`);
+        )`, (err) => {
+            if (!err) {
+                // Attempt to add columns if they don't exist (for migration)
+                // We ignore errors here because if the column exists, it will throw, which is fine.
+                db.run(`ALTER TABLE contacts ADD COLUMN value_provide TEXT`, () => {});
+                db.run(`ALTER TABLE contacts ADD COLUMN value_receive TEXT`, () => {});
+                db.run(`ALTER TABLE contacts ADD COLUMN tags TEXT`, () => {});
+            }
+        });
 
         // Settings table
         db.run(`CREATE TABLE IF NOT EXISTS settings (

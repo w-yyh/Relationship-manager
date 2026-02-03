@@ -32,15 +32,25 @@ A 3D visualization and strategic analysis tool for personal network management. 
    cd Relationship-manager
    ```
 
-2. Install dependencies:
+2. Install dependencies (Root & Server):
    ```bash
+   # Install frontend dependencies
    npm install
+
+   # Install backend dependencies
+   cd server
+   npm install
+   cd ..
    ```
 
-3. Start the development server:
+3. Start the Application (Frontend + Backend):
    ```bash
-   npm run dev
+   npm start
    ```
+
+   This command will simultaneously start:
+   - Frontend: http://localhost:5173
+   - Backend: http://localhost:3001
 
 4. Build for production:
    ```bash
