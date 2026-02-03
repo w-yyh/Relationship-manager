@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text, Html, Sphere, Line, Stars } from '@react-three/drei';
 import { useContacts } from '../context/ContactsContext';
 import { CATEGORIES } from '../utils/logic';
+import { getTagById } from '../utils/tags';
 import * as THREE from 'three';
 
 function Axis({ start, end, label, color = "white" }) {
@@ -105,15 +106,57 @@ function DataPoint({ contact, onClick }) {
 
             {hovered && (
                 <Html distanceFactor={15} zIndexRange={[100, 0]}>
-                    <div className="bg-zinc-900/90 border border-zinc-700 p-3 rounded-lg shadow-xl backdrop-blur-md w-48 pointer-events-none transform -translate-x-1/2 -translate-y-full mt-[-10px]">
+                    <div className="bg-zinc-900/95 border border-zinc-700 p-4 rounded-lg shadow-xl backdrop-blur-md w-72 pointer-events-none transform -translate-x-1/2 -translate-y-full mt-[-10px]">
                         <h4 className="font-bold text-white text-lg">{contact.name}</h4>
                         <p className="text-xs text-zinc-400 font-mono mb-2">
                             [{contact.x}, {contact.y}, {contact.z}]
                         </p>
-                        <div className="text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 inline-block text-zinc-300">
+                        <div className="text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 inline-block text-zinc-300 mb-2">
                             {CATEGORIES[contact.category]?.label}
                         </div>
-                        {contact.note && <p className="mt-2 text-xs text-zinc-500 italic truncate">{contact.note}</p>}
+                        
+                        {contact.tags && contact.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-2">
+                                {contact.tags.map(tagId => {
+                                    const tag = getTagById(tagId);
+                                    if (!tag) return null;
+                                    return (
+                                        <span 
+                                            key={tagId} 
+                                            className="text-[10px] px-1.5 py-0.5 rounded border"
+                                            style={{ 
+                                                borderColor: tag.color, 
+                                                color: tag.color,
+                                                backgroundColor: `${tag.color}11`
+                                            }}
+                                        >
+                                            {tag.label}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {(contact.value_provide || contact.value_receive) && (
+                            <div className="space-y-1 mb-2 border-t border-zinc-800 pt-2">
+                                {contact.value_provide && (
+                                    <div className="text-xs">
+                                        <span className="text-green-400 font-semibold">Provide:</span> <span className="text-zinc-300">{contact.value_provide}</span>
+                                    </div>
+                                )}
+                                {contact.value_receive && (
+                                    <div className="text-xs">
+                                        <span className="text-blue-400 font-semibold">Receive:</span> <span className="text-zinc-300">{contact.value_receive}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {contact.note && (
+                            <div className="mt-2 pt-2 border-t border-zinc-800">
+                                <p className="text-xs text-zinc-400 italic whitespace-pre-wrap break-words">{contact.note}</p>
+                            </div>
+                        )}
                     </div>
                 </Html>
             )}

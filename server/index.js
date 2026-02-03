@@ -75,10 +75,10 @@ app.get('/api/contacts', authenticateToken, (req, res) => {
 });
 
 app.post('/api/contacts', authenticateToken, (req, res) => {
-    const { id, name, x, y, z, note, category } = req.body;
+    const { id, name, x, y, z, note, category, value_provide, value_receive, tags } = req.body;
     db.run(
-        'INSERT INTO contacts (id, user_id, name, x, y, z, note, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [id, req.user.id, name, x, y, z, note, category],
+        'INSERT INTO contacts (id, user_id, name, x, y, z, note, category, value_provide, value_receive, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [id, req.user.id, name, x, y, z, note, category, value_provide, value_receive, JSON.stringify(tags || [])],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ message: 'Contact added' });
@@ -87,10 +87,10 @@ app.post('/api/contacts', authenticateToken, (req, res) => {
 });
 
 app.put('/api/contacts/:id', authenticateToken, (req, res) => {
-    const { name, x, y, z, note, category } = req.body;
+    const { name, x, y, z, note, category, value_provide, value_receive, tags } = req.body;
     db.run(
-        'UPDATE contacts SET name = ?, x = ?, y = ?, z = ?, note = ?, category = ? WHERE id = ? AND user_id = ?',
-        [name, x, y, z, note, category, req.params.id, req.user.id],
+        'UPDATE contacts SET name = ?, x = ?, y = ?, z = ?, note = ?, category = ?, value_provide = ?, value_receive = ?, tags = ? WHERE id = ? AND user_id = ?',
+        [name, x, y, z, note, category, value_provide, value_receive, JSON.stringify(tags || []), req.params.id, req.user.id],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ message: 'Contact updated' });
@@ -125,7 +125,7 @@ app.post('/api/settings', authenticateToken, (req, res) => {
 });
 
 // Anything that doesn't match the above, send back index.html
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 

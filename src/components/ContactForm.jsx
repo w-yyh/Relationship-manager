@@ -3,18 +3,19 @@ import { useContacts } from '../context/ContactsContext';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card, CardContent } from './ui/Card';
-import { Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { Plus, X, Pencil, Trash2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CATEGORIES } from '../utils/logic';
+import { TAG_CATEGORIES, getTagById } from '../utils/tags';
 
 export function ContactForm() {
     const { contacts, addContact, updateContact, deleteContact } = useContacts();
     const [isEditing, setIsEditing] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [formData, setFormData] = useState({ name: '', x: 5, y: 5, z: 5, note: '' });
+    const [formData, setFormData] = useState({ name: '', x: 5, y: 5, z: 5, note: '', value_provide: '', value_receive: '', tags: [] });
 
     const resetForm = () => {
-        setFormData({ name: '', x: 5, y: 5, z: 5, note: '' });
+        setFormData({ name: '', x: 5, y: 5, z: 5, note: '', value_provide: '', value_receive: '', tags: [] });
         setEditingId(null);
         setIsEditing(false);
     };
@@ -35,10 +36,22 @@ export function ContactForm() {
             x: contact.x,
             y: contact.y,
             z: contact.z,
-            note: contact.note || ''
+            note: contact.note || '',
+            value_provide: contact.value_provide || '',
+            value_receive: contact.value_receive || '',
+            tags: contact.tags || []
         });
         setEditingId(contact.id);
         setIsEditing(true);
+    };
+
+    const toggleTag = (tagId) => {
+        setFormData(prev => {
+            const tags = prev.tags.includes(tagId)
+                ? prev.tags.filter(t => t !== tagId)
+                : [...prev.tags, tagId];
+            return { ...prev, tags };
+        });
     };
 
     return (
@@ -79,6 +92,40 @@ export function ContactForm() {
                                         <div className="bg-zinc-800/50 rounded p-1 text-center">Y: {contact.y}</div>
                                         <div className="bg-zinc-800/50 rounded p-1 text-center">Z: {contact.z}</div>
                                     </div>
+
+                                    {(contact.value_provide || contact.value_receive) && (
+                                        <div className="mt-3 space-y-1 border-t border-zinc-800/50 pt-2">
+                                            {contact.value_provide && (
+                                                <div className="text-[10px] leading-tight text-zinc-400">
+                                                    <span className="text-green-500/80 font-medium">我提供:</span> {contact.value_provide}
+                                                </div>
+                                            )}
+                                            {contact.value_receive && (
+                                                <div className="text-[10px] leading-tight text-zinc-400">
+                                                    <span className="text-blue-500/80 font-medium">对方提供:</span> {contact.value_receive}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {contact.tags && contact.tags.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1">
+                                            {contact.tags.map(tagId => {
+                                                const tag = getTagById(tagId);
+                                                if (!tag) return null;
+                                                return (
+                                                    <span 
+                                                        key={tagId} 
+                                                        className="text-[9px] px-1.5 py-0.5 rounded-full border border-zinc-800 bg-zinc-900/50 text-zinc-500"
+                                                        style={{ borderColor: `${tag.color}33`, color: tag.color }}
+                                                    >
+                                                        {tag.label}
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
                                     {contact.note && <p className="mt-2 text-xs text-zinc-500 truncate">{contact.note}</p>}
                                     <div className="mt-2 text-[10px] uppercase tracking-wider font-semibold text-zinc-500">
                                         {CATEGORIES[contact.category]?.label}
@@ -97,7 +144,7 @@ export function ContactForm() {
                         initial={{ x: 300, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: 300, opacity: 0 }}
-                        className="w-full md:w-96 bg-zinc-900 border-l border-zinc-800 p-6 shadow-2xl absolute right-0 top-0 bottom-0 md:relative z-20 h-full overflow-y-auto"
+                        className="w-full md:w-[450px] bg-zinc-900 border-l border-zinc-800 p-6 shadow-2xl absolute right-0 top-0 bottom-0 md:relative z-20 h-full overflow-y-auto"
                     >
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold">{editingId ? 'Edit Contact' : 'New Contact'}</h3>
@@ -123,6 +170,59 @@ export function ContactForm() {
                                     <label className="block text-sm font-medium mb-1 text-zinc-400">Accessibility (Z) - {formData.z}</label>
                                     <input type="range" min="0" max="10" step="0.5" value={formData.z} onChange={e => setFormData({ ...formData, z: e.target.value })} className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600" />
                                 </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-zinc-400">What I can provide to them</label>
+                                    <Input value={formData.value_provide} onChange={e => setFormData({ ...formData, value_provide: e.target.value })} placeholder="e.g. Technical advice, Networking" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-zinc-400">What they can provide to me</label>
+                                    <Input value={formData.value_receive} onChange={e => setFormData({ ...formData, value_receive: e.target.value })} placeholder="e.g. Funding, Mentorship" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="block text-sm font-medium text-zinc-400">Value Tags</label>
+                                {Object.values(TAG_CATEGORIES).map(category => (
+                                    <div key={category.id} className="space-y-2">
+                                        <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: category.color }}>{category.label}</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {category.tags.map(tag => {
+                                                const isSelected = formData.tags.includes(tag.id);
+                                                return (
+                                                    <div key={tag.id} className="relative group">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleTag(tag.id)}
+                                                            className={`text-xs px-2 py-1 rounded-full border transition-colors flex items-center gap-1 ${
+                                                                isSelected 
+                                                                    ? `bg-opacity-20 border-opacity-50` 
+                                                                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-500'
+                                                            }`}
+                                                            style={isSelected ? { 
+                                                                backgroundColor: `${category.color}33`, 
+                                                                borderColor: category.color, 
+                                                                color: 'white' 
+                                                            } : {}}
+                                                        >
+                                                            {isSelected && <Check size={10} />}
+                                                            {tag.label}
+                                                        </button>
+                                                        
+                                                        {/* Tooltip - Adjusted to left-aligned to prevent clipping */}
+                                                        <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-zinc-900 border border-zinc-700 rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                                                            <div className="font-semibold text-white text-xs mb-1">{tag.label}</div>
+                                                            <div className="text-[10px] text-zinc-300 mb-1">{tag.desc}</div>
+                                                            <div className="text-[10px] text-zinc-500 italic">Ex: {tag.example}</div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
 
                             <div>
